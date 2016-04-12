@@ -1,3 +1,4 @@
+from __future__ import print_function
 from itertools import count
 import numpy as np
 
@@ -25,22 +26,26 @@ class Node(object):
         return result
 
     def mark_similar(self, precision, inspected):
-        neighbours = [node for node in self.param.nodes if self.probability(node) <= precision]
-        for node in neighbours:
-            if node.hooks:
-                for hook in node.hooks:
-                    if not (hook is inspected):
-                        hook.similarity += self.distance_btw(node)
+        if isinstance(self.value, float):
+            neighbours = [node for node in self.param.nodes if self.probability(node) <= precision]
+            for node in neighbours:
+                if node.hooks:
+                    for hook in node.hooks:
+                        if not (hook is inspected):
+                            hook.similarity.append(self.distance_btw(node))
+            # [ for hook in node.hooks for node in neighbours if node.hooks ]
 
     def distance_btw(self, other):
         distance = 0
         # print(type(self.value))
         if not isinstance(self.value, unicode):
-            distance = 1 - np.abs(self.value - other.value) / self.param.range
+            distance = 1 - (np.abs(self.value - other.value) / self.param.range)
+            # print('Distance: ', distance)
 
         return distance
 
     def probability(self, other):
         return np.abs(self.value - other.value) / self.param.range
+
     def __str__(self):
         return ': '.join([str(self.id), str(self.value)])

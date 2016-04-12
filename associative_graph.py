@@ -20,6 +20,9 @@ class HookCluster(object):
     def get_hooks(self):
         return self.hooks
 
+    def verify_similar(self):
+        for hook in self.hooks:
+            hook.similarity = np.array(hook.similarity).mean()
     # def __str__(self):
     # 	print_out = ''
     # 	if self.hooks:
@@ -158,20 +161,24 @@ if __name__ == "__main__":
     print('\n' * 2)
     print('Hook cluster')
     print('Len: ', len(agds.hook_cluster.hooks))
-    agds.hook_cluster.hooks[0].get_similar(0.2)
+    agds.hook_cluster.hooks[0].get_similar(0.05)
+    agds.hook_cluster.verify_similar()
+    # agds.hook_cluster.hooks[120].get_similar(0.2)
+    # agds.hook_cluster.hooks[51].get_similar(0.5)
+    count = 0
     for hook in agds.hook_cluster.hooks:
         # print('^'*50)
-
-        if hook.similarity:
-            print('Hook Id: ', hook.id)
-            print('\t','Similarity: ', hook.similarity)
-            for node in hook.nodes:
-                print('\tNode Id: ', node.id, node.param, node.value)
+        count += 1
+        # if hook.similarity:
+            # print('Hook Id: ', hook.id)
+        print('\t','Similarity: ', hook.similarity, hook.get_node_by_param(agds.param_cluster.get_param('class')).value)
+            # for node in hook.nodes:
+                # print('\tNode Id: ', node.id, node.param, node.value)
         # hook.get_similar(0.2)
         # print('\t'*2, len(hook.get_nodes()))
 
         # break
-
+    print(count)
     # print('\n' * 2)
     # print('Param cluster')
     # print('Len: ', len(agds.param_cluster.params))

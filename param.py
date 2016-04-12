@@ -6,7 +6,8 @@ class Param(object):
 
     def add_node(self, node):
         self.nodes.append(node)
-        self.update_range()
+        # TO DO: Add range updating on the fly, when node is added
+        # self.update_range()
         node.set_param(self)
 
     def get_nodes(self):
@@ -44,6 +45,7 @@ class Param(object):
             unique_nodes.append(dnodes[i])
         self.nodes = unique_nodes
         self.nodes.sort(key=lambda x: x.value, reverse=False)
+        self.update_range()
 
     def update_range(self):
         if isinstance(self.nodes[0].value, float):

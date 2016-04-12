@@ -1,5 +1,6 @@
+from __future__ import print_function
 from itertools import count
-
+import numpy as np
 
 class Hook(object):
     _ids = count(0)
@@ -7,7 +8,7 @@ class Hook(object):
     def __init__(self):
         self.id = self._ids.next()
         self.nodes = []
-        self.similarity = 0
+        self.similarity = []
 
     # node.set_hook(node):
 
@@ -28,7 +29,10 @@ class Hook(object):
 
     def get_similar(self, precision):
         for node in self.nodes:
-            node.mark_similar(self, precision)
+            node.mark_similar(precision=precision, inspected=self)
+        # self.nodes[0].mark_similar(precision, self)
+        #
+        # print('Node', self.nodes[len(self.nodes) - 1])
     # def reduce(self, other):
     # 	if self.node == other.node:
     # 		self.node.appeng(other.node)
