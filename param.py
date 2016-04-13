@@ -1,7 +1,7 @@
 from __future__ import print_function
 from utils import ComponentError
 from node import NodeError
-
+from enum import Enum
 
 class ParamError(ComponentError):
     pass
@@ -11,21 +11,26 @@ class NotMeasurableParamError(ParamError):
     pass
 
 
+class ParamType(Enum):
+    quantitative = 1
+    qualitative = 2
+
 class Param(object):
 
     def __init__(self, name=''):
         self.name = name
+        self.type = None
         self.nodes = []
         self.range = 0
 
     def append(self, node):
         self.nodes.append(node)
-        print()
         self.reduce()
         try:
             self.measure()
+            self.type = ParamType.quantitative
         except NotMeasurableParamError:
-            pass
+            self.type = ParamType.qualitative
         node.param = self
 
     def node(self, by_value):

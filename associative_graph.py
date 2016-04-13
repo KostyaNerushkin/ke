@@ -4,9 +4,10 @@ from pandas import DataFrame, Series
 import numpy as np
 from itertools import count
 from node import Node
-from hook import Hook
-from param import Param
+from hook import Hook, HookError
+from param import Param, ParamType
 from utils import ComponentError
+from operator import attrgetter
 
 class HookList(object):
     def __init__(self):
@@ -15,33 +16,37 @@ class HookList(object):
     def add(self):
         hook = Hook()
         self.hooks.append(hook)
-        # print('Hook Id: ', hook.id)
         return hook
 
-    def verify_similar(self):
+    def verify_similar(self, weights):
         for hook in self.hooks:
             if hook.similarity:
-                hook.similarity = np.array(hook.similarity).mean()
+                hook.similarity = np.dot(np.array(hook.similarity), weights)
             else:
                 hook.similarity = 0
-    # def __str__(self):
-    # 	print_out = ''
-    # 	if self.hooks:
-    # 		print_out = ', '.join([str(hook) for hook in self.hooks])
-    # 	return
+
 
 class ParamNotExistError(ComponentError):
     pass
+
 
 class ParamList(object):
 
     def __init__(self):
         self.params = []
+        self.weights = []
 
     def add(self, name):
         param = Param(name)
         self.params.append(param)
         return param
+
+    def get_weights(self):
+        return  np.array([1 / float(len(self.quantitive()))] * (len(self.quantitive())))
+
+    # TODO: refactor to avoid this function, used to extract quantitive params
+    def quantitive(self):
+        return [param for param in self.params if param.type == ParamType.quantitative]
 
     def index(self, name):
         result = None
@@ -60,33 +65,6 @@ class ParamList(object):
 
     def __iter__(self):
         return iter(self.params)
-
-    # def reduce(self):
-    # 	for param in self.params:
-    # 		param_next_list = self.params[:]
-    # 		param_next_list.remove(param)
-    # 		# TODO: if node in param also reduced, is it affect list iterating
-    # 		if param_next_list:
-    # 			for param_next in param_next_list:
-    # 				param.reduce(param_next)
-
-    # def reduce(self):
-    # 	for node in self.nodes:
-    # 		node_next_list = self.nodes[:]
-    # 		node_next_list.remove(node)
-    # 		# TODO: if node in param also reduced, is it affect list iterating
-    # 		# TODO: need to create unique list, and then assign nodes to hooks
-    # 		if node_next_list:
-    # 			for node_next in node_next_list:
-    # 				if node == node_next:
-    # 					node = other.node
-    # 					other.node.set_param(self)
-    # def reduce(self, other):
-    # 	#TODO: Scaling problem when reducing params
-    # 	for node in self.nodes:
-    # 		if node == other.node:
-    # 			node = other.node
-    # 			other.node.set_param(self)
 
 
 class AssociativeGraph(object):
@@ -107,21 +85,23 @@ class AssociativeGraph(object):
             row, column = frame.shape
 
         if column == 1:
-            param_list.add(frame.name)
+            param = param_list.add(frame.name)
             for index, value in frame.iteritems():
                 node = Node(value)
                 node_list.append(node)
-                param_list.index(frame.name).append(node)
+                param.append(node)
         else:
             for column in frame:
                 node_list.append(self.transform(frame=frame[column], param_list=param_list))
         return node_list
 
-    def similar_to(self, indexes, proximity):
+    def similarity(self, indexes, proximity=1):
         for index in indexes:
-            self.hook_list.hooks[index].similar(proximity)
-            print(self.hook_list.hooks[index])
-        self.hook_list.verify_similar()
+            if index in range(len(self.hook_list.hooks)):
+                self.hook_list.hooks[index].similar(proximity)
+            else:
+                raise HookError
+        self.hook_list.verify_similar(self.param_list.get_weights())
 
     def reduce_nodes(self):
         for param in self.param_list:
@@ -145,7 +125,11 @@ if __name__ == "__main__":
     # frame = DataFrame(np.array(randn).transpose(), columns=['Col1', 'Col2'])
     print(frame)
     associative_graph = AssociativeGraph(frame=frame)
-    associative_graph.similar_to([3, 4, 5], proximity=0.1)
-    for hook in associative_graph.hook_list.hooks:
+    associative_graph.similarity([124], proximity=1)
+    print(type(associative_graph.hook_list.hooks))
+    for hook in sorted(associative_graph.hook_list.hooks,key=attrgetter('similarity')):
         print('\t', 'Similarity: ', hook.similarity, hook.get_by_param(associative_graph.param_list.index('class')).value)
-
+        # for node in hook.nodes:
+        #     print('\t', node.value)
+    for node in associative_graph.hook_list.hooks[123].nodes:
+        print('\t', node.value)

@@ -1,7 +1,7 @@
 from __future__ import print_function
 from itertools import count
 from utils import ComponentError
-
+import numpy as np
 
 class HookError(ComponentError):
     pass
@@ -26,6 +26,9 @@ class Hook(object):
 
     def capture(self, node):
         self.nodes.append(node)
+        # Similarity is defined only for quantitative value
+        if isinstance(node.value, float):
+            self.similarity.append(0)
         node.hooks.append(self)
 
     def similar(self, proximity):

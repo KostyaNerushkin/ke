@@ -23,6 +23,9 @@ class Node(object):
                 if node.hooks:
                     for hook in node.hooks:
                         if not (hook is inspected):
+                            hook.similarity.reverse()
+                            hook.similarity.pop()
+                            hook.similarity.reverse()
                             hook.similarity.append(self.distance(node))
 
     def distance(self, other):
@@ -32,7 +35,6 @@ class Node(object):
         return dist
 
     def neighborhood(self, other):
-        print(1 - np.abs(self.value - other.value) / self.param.range)
         return np.abs(self.value - other.value) / self.param.range
 
     def __eq__(self, other):
