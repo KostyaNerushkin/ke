@@ -1,6 +1,11 @@
 from __future__ import print_function
 from itertools import count
-import numpy as np
+from utils import ComponentError
+
+
+class HookError(ComponentError):
+    pass
+
 
 class Hook(object):
     _ids = count(0)
@@ -10,31 +15,20 @@ class Hook(object):
         self.nodes = []
         self.similarity = []
 
-    # node.set_hook(node):
-
-    def get_nodes(self):
-        return self.nodes
-
-    def get_node_by_param(self, param):
+    def get_by_param(self, param):
         result = None
         for node in self.nodes:
             if node.param == param:
                 result = node
+        if not result:
+            raise HookError
         return result
 
-    def capture_node(self, node):
-        # print('Capture node: ', node.id)
+    def capture(self, node):
         self.nodes.append(node)
-        node.set_hook(self)
+        node.hooks.append(self)
 
-    def get_similar(self, precision):
+    def similar(self, proximity):
         for node in self.nodes:
-            node.mark_similar(precision=precision, inspected=self)
-        # self.nodes[0].mark_similar(precision, self)
-        #
-        # print('Node', self.nodes[len(self.nodes) - 1])
-    # def reduce(self, other):
-    # 	if self.node == other.node:
-    # 		self.node.appeng(other.node)
-    # 		other.node.set_hook(self)
+            node.mark_similar(proximity=proximity, inspected=self)
 

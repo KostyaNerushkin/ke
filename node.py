@@ -1,7 +1,11 @@
 from __future__ import print_function
 from itertools import count
 import numpy as np
+from utils import ComponentError
 
+
+class NodeError(ComponentError):
+    pass
 
 class Node(object):
     _ids = count(0)
@@ -12,11 +16,24 @@ class Node(object):
         self.hooks = []
         self.param = ''
 
-    def set_hook(self, hook):
-        self.hooks.append(hook)
+    def mark_similar(self, proximity, inspected):
+        if isinstance(self.value, float):
+            neighbours = [node for node in self.param.nodes if self.neighborhood(node) <= proximity]
+            for node in neighbours:
+                if node.hooks:
+                    for hook in node.hooks:
+                        if not (hook is inspected):
+                            hook.similarity.append(self.distance(node))
 
-    def set_param(self, param):
-        self.param = param
+    def distance(self, other):
+        dist = 0
+        if not isinstance(self.value, unicode):
+            dist = 1 - (np.abs(self.value - other.value) / self.param.range)
+        return dist
+
+    def neighborhood(self, other):
+        print(1 - np.abs(self.value - other.value) / self.param.range)
+        return np.abs(self.value - other.value) / self.param.range
 
     def __eq__(self, other):
         if self.get_value() == other.get_value():
@@ -24,28 +41,6 @@ class Node(object):
         else:
             result = False
         return result
-
-    def mark_similar(self, precision, inspected):
-        if isinstance(self.value, float):
-            neighbours = [node for node in self.param.nodes if self.probability(node) <= precision]
-            for node in neighbours:
-                if node.hooks:
-                    for hook in node.hooks:
-                        if not (hook is inspected):
-                            hook.similarity.append(self.distance_btw(node))
-            # [ for hook in node.hooks for node in neighbours if node.hooks ]
-
-    def distance_btw(self, other):
-        distance = 0
-        # print(type(self.value))
-        if not isinstance(self.value, unicode):
-            distance = 1 - (np.abs(self.value - other.value) / self.param.range)
-            # print('Distance: ', distance)
-
-        return distance
-
-    def probability(self, other):
-        return np.abs(self.value - other.value) / self.param.range
 
     def __str__(self):
         return ': '.join([str(self.id), str(self.value)])

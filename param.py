@@ -1,54 +1,63 @@
+from __future__ import print_function
+from utils import ComponentError
+from node import NodeError
+
+
+class ParamError(ComponentError):
+    pass
+
+
+class NotMeasurableParamError(ParamError):
+    pass
+
+
 class Param(object):
-    def __init__(self, label=''):
-        self.label = label
+
+    def __init__(self, name=''):
+        self.name = name
         self.nodes = []
         self.range = 0
 
-    def add_node(self, node):
+    def append(self, node):
         self.nodes.append(node)
-        # TO DO: Add range updating on the fly, when node is added
-        # self.update_range()
-        node.set_param(self)
+        print()
+        self.reduce()
+        try:
+            self.measure()
+        except NotMeasurableParamError:
+            pass
+        node.param = self
 
-    def get_nodes(self):
-        return self.nodes
-
-    def get_label(self):
-        return self.label
-
-    def set_label(self, label):
-        self.label = label
-
-    def __str__(self):
-        return self.label
-
-    def __iter__(self):
-        return iter(self.nodes)
-
-    # def __next__(self):
-
-    def get_node(self, value):
+    def node(self, by_value):
         result_node = None
         if self.nodes:
             for node in self.nodes:
-                if node.value == value:
+                if node.value == by_value:
                     result_node = node
+        else:
+            raise ParamError('No nodes defined')
         if not result_node:
-            raise ValueError
+            raise NodeError('Node with ' + str(by_value) + ' not in ' + self.name)
         return result_node
 
-    def unique(self):
-        dnodes = {node.value: node for node in self.nodes}
-        snodes = set(dnodes.keys())
+    def reduce(self):
+        dict_nodes = {node.value: node for node in self.nodes}
+        set_nodes_values = set(dict_nodes.keys())
         unique_nodes = []
-        for i in snodes:
-            unique_nodes.append(dnodes[i])
+        for node in set_nodes_values:
+            unique_nodes.append(dict_nodes[node])
         self.nodes = unique_nodes
         self.nodes.sort(key=lambda x: x.value, reverse=False)
-        self.update_range()
 
-    def update_range(self):
+    def measure(self):
         if isinstance(self.nodes[0].value, float):
             self.range = self.nodes[-1].value - self.nodes[0].value
         else:
-            self.range = None
+            raise NotMeasurableParamError('Not measurable param')
+
+
+    def __str__(self):
+        return self.name
+
+    def __iter__(self):
+        return iter(self.nodes)
